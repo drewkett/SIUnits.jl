@@ -494,6 +494,9 @@ promote_rule{S<:Number,T<:Number,U,m,kg,s,A,K,mol,cd,rad,sr}(x::Type{NonSIQuanti
 promote_rule{S<:Number,T<:Number,U,m,kg,s,A,K,mol,cd,rad,sr}(x::Type{SIQuantity{T,m,kg,s,A,K,mol,cd,rad,sr}},y::Type{NonSIQuantity{S,U}}) =
     SIQuantity{promote_type(S,T)}
 
+promote_rule{S<:Number,U,m,kg,s,A,K,mol,cd,rad,sr}(x::Type{NonSIQuantity{S,U}},y::Type{SIUnit{m,kg,s,A,K,mol,cd,rad,sr}}) =
+    SIQuantity{S}
+
 siquantity{B}(T,U::NonSIUnit{B}) = quantity(T,B())
 siquantity{B}(T,U::Type{NonSIUnit{B}}) = quantity(T,B())
 #convert{T,S,U}(::Type{SIQuantity{T}},x::NonSIQuantity{S,U}) = (siquantity(promote_type(T,S),U())(x.val))
