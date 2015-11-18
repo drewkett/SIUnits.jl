@@ -111,5 +111,4 @@ module ShortUnits
     const μF = µF
     const μA = µA
     const μW = µW
-
 end
