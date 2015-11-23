@@ -50,7 +50,10 @@ OneNewton = 1*(kg*m/s^2)
 @test s == sqrt(1s^2)
 @test sqrt(2)*m == sqrt(2m^2)
 
-@test_throws_compat InexactError sqrt(1s)
+@test sqrt(1s) == 1s^(1//2)
+@test 1s^0.5 == 1s^(1//2)
+@test (1s)^0.5 == 1s^(1//2)
+@test_throws_compat MethodError (1s)^pi
 
 @test 1/s == 1Hz
 

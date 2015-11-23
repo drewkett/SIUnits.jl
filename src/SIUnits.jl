@@ -7,8 +7,10 @@ module SIUnits
     import Base: ==, +, -, *, /, .+, .-, .*, ./, //, ^
     import Base: promote_rule, promote_type, convert, show, mod
 
-    typealias UnitTuple NTuple{9,Int64}
-    const EmptyTuple = (0,0,0,0,0,0,0,0,0)
+
+    typealias UnitTupleType Rational{Int64}
+    typealias UnitTuple NTuple{9,UnitTupleType}
+    const EmptyTuple = convert(UnitTuple,(0,0,0,0,0,0,0,0,0))
 
     #Basic UnitTuple Operations
     +(xs::UnitTuple,ys::UnitTuple) = ([x+y for (x,y) in zip(xs,ys)]...)
@@ -16,9 +18,9 @@ module SIUnits
     -(xs::UnitTuple) = ([-x for x in xs]...)
     *(x::Integer,ys::UnitTuple) = ([x*y for y in ys]...)
     *(xs::UnitTuple,y::Integer) = ([x*y for x in xs]...)
-    *{I<:Integer}(x::Rational{I},ys::UnitTuple) = ([convert(Int64,x*y) for y in ys]...)
-    *{I<:Integer}(xs::UnitTuple,y::Rational{I}) = ([convert(Int64,x*y) for x in xs]...)
-    /(xs::UnitTuple,y::Integer) = ([convert(Int64,x/y) for x in xs]...)
+    *{I<:Integer}(x::Rational{I},ys::UnitTuple) = ([convert(UnitTupleType,x*y) for y in ys]...)
+    *{I<:Integer}(xs::UnitTuple,y::Rational{I}) = ([convert(UnitTupleType,x*y) for x in xs]...)
+    /(xs::UnitTuple,y::Integer) = ([convert(UnitTupleType,x/y) for x in xs]...)
 
     immutable SIQuantity{T<:Number,Tup} <: Number
         val::T
@@ -222,7 +224,7 @@ module SIUnits
         SIQuantity{typeof(val),Tup*r}(val)
     end
 
-    ^{T,Tup}(x::SIQuantity{T,Tup},r::AbstractFloat) = x^rationalize(r)
+    ^{T,Tup}(x::SIQuantity{T,Tup},r::Real) = x^rationalize(r)
 
     function ^{T,S,TupS,TupT}(
         x::SIQuantity{T,TupT},y::SIQuantity{S,TupS})
@@ -294,7 +296,7 @@ module SIUnits
 
     import Base: sin, cos, tan, cot, sec, csc
     for func in (:sin,:cos,:tan,:cot,:sec,:csc)
-        @eval $func{T}(θ::SIQuantity{T,(0,0,0,0,0,0,0,1,0)}) = $func(θ.val)
+        @eval $func{T}(θ::SIQuantity{T,convert(UnitTuple,(0,0,0,0,0,0,0,1,0))}) = $func(θ.val)
     end
 
     # Forwarding methods that do not affect units
@@ -319,6 +321,12 @@ module SIUnits
         SIUnit{i*Tup}()
     end
 
+    function ^{Tup}(x::SIUnit{Tup},i::Rational)
+        SIUnit{i*Tup}()
+    end
+
+    ^(x::SIUnit,r::Real) = x^rationalize(r)
+
     unit{T,Tup}(x::SIQuantity{T,Tup}) = SIUnit{Tup}()
 
     export SIPrefix, Meter, KiloGram, Second, Ampere, Kelvin, Mole, Candela, Radian, Steradian, Kilo, Mega, Giga,
@@ -326,16 +334,16 @@ module SIUnits
         Gram, Joule, Coulomb, Volt, Farad, Newton, Ohm, CentiMeter, Siemens, Hertz, Watt, Pascal
 
     const UnitNames = (:kg,:m,:s,:A,:K,:mol,:can,:rad,:sr)
-    const SIPrefix  = SIUnit{(0,0,0,0,0,0,0,0,0)}()
-    const Meter     = SIUnit{(1,0,0,0,0,0,0,0,0)}()
-    const KiloGram  = SIUnit{(0,1,0,0,0,0,0,0,0)}()
-    const Second    = SIUnit{(0,0,1,0,0,0,0,0,0)}()
-    const Ampere    = SIUnit{(0,0,0,1,0,0,0,0,0)}()
-    const Kelvin    = SIUnit{(0,0,0,0,1,0,0,0,0)}()
-    const Mole      = SIUnit{(0,0,0,0,0,1,0,0,0)}()
-    const Candela   = SIUnit{(0,0,0,0,0,0,1,0,0)}()
-    const Radian    = SIUnit{(0,0,0,0,0,0,0,1,0)}()
-    const Steradian = SIUnit{(0,0,0,0,0,0,0,0,1)}()
+    const SIPrefix  = SIUnit{convert(UnitTuple,(0,0,0,0,0,0,0,0,0))}()
+    const Meter     = SIUnit{convert(UnitTuple,(1,0,0,0,0,0,0,0,0))}()
+    const KiloGram  = SIUnit{convert(UnitTuple,(0,1,0,0,0,0,0,0,0))}()
+    const Second    = SIUnit{convert(UnitTuple,(0,0,1,0,0,0,0,0,0))}()
+    const Ampere    = SIUnit{convert(UnitTuple,(0,0,0,1,0,0,0,0,0))}()
+    const Kelvin    = SIUnit{convert(UnitTuple,(0,0,0,0,1,0,0,0,0))}()
+    const Mole      = SIUnit{convert(UnitTuple,(0,0,0,0,0,1,0,0,0))}()
+    const Candela   = SIUnit{convert(UnitTuple,(0,0,0,0,0,0,1,0,0))}()
+    const Radian    = SIUnit{convert(UnitTuple,(0,0,0,0,0,0,0,1,0))}()
+    const Steradian = SIUnit{convert(UnitTuple,(0,0,0,0,0,0,0,0,1))}()
 
     const Kilo       = (1000)SIPrefix
     const Mega       = (10^6)SIPrefix
@@ -371,7 +379,7 @@ module SIUnits
 
 
     # Pretty Printing - Text
-    typealias NameValuePair Tuple{Symbol,Int64}
+    typealias NameValuePair Tuple{Symbol,UnitTupleType}
     char_superscript(::Type{Val{'-'}}) = '\u207b'
     char_superscript(::Type{Val{'1'}}) = '\u00b9'
     char_superscript(::Type{Val{'2'}}) = '\u00b2'
@@ -387,11 +395,15 @@ module SIUnits
         char_superscript(Val{c})
     end
 
-    is_nonzero_value(p::NameValuePair) = p[2] != 0
+    is_nonzero_value(p::NameValuePair) = num(p[2]) != 0
     function show(io::IO,p::NameValuePair)
         print(io,p[1])
-        if p[2] != 1
-            print(io,superscript(p[2]))
+        if den(p[2]) == 1
+            if num(p[2]) != 1
+                print(io,superscript(num(p[2])))
+            end
+        else
+            print(io,superscript(num(p[2])),'\u2032',superscript(den(p[2])))
         end
     end
 
